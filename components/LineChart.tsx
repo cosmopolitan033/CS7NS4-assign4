@@ -1,5 +1,7 @@
-import React from 'react';
-import { Line } from 'react-chartjs-2';
+import React, { Suspense } from 'react';
+
+const Line = React.lazy(() => import('react-chartjs-2').then((mod) => ({ default: mod.Line })));
+
 import {
     Chart as ChartJS,
     LineElement,
@@ -11,8 +13,11 @@ import {
     CategoryScale,
 } from 'chart.js';
 
-// Register required chart.js components
-ChartJS.register(LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale);
+// Dynamically import `chartjs-plugin-zoom` only on the client side
+if (typeof window !== 'undefined') {
+    const zoomPlugin = require('chartjs-plugin-zoom').default;
+    ChartJS.register(LineElement, PointElement, LinearScale, Title, Tooltip, Legend, CategoryScale, zoomPlugin);
+}
 
 interface LineChartProps {
     labels: string[];
@@ -38,11 +43,26 @@ const LineChart: React.FC<LineChartProps> = ({ labels, data }) => {
         responsive: true,
         plugins: {
             legend: {
-                position: 'top' as const, // Ensure strict type compatibility
+                position: 'top' as const,
             },
             title: {
                 display: true,
                 text: 'Air Quality Over Time',
+            },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x' as const,
+                },
+                zoom: {
+                    wheel: {
+                        enabled: true,
+                    },
+                    pinch: {
+                        enabled: true,
+                    },
+                    mode: 'x' as const,
+                },
             },
         },
         scales: {
@@ -61,7 +81,15 @@ const LineChart: React.FC<LineChartProps> = ({ labels, data }) => {
         },
     };
 
-    return <Line data={chartData} options={options} />;
+    if (typeof window === 'undefined') {
+        return null; // Return nothing if window is unavailable
+    }
+
+    return (
+        <Suspense fallback={<p>Loading Chart...</p>}>
+            <Line data={chartData} options={options} />
+        </Suspense>
+    );
 };
 
 export default LineChart;

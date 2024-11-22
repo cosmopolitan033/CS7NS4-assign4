@@ -1,12 +1,19 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
     "paths": {
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "module": "esnext", // Change to a module type that supports dynamic imports
+    "target": "es2017", // Ensure compatibility with async/await and dynamic imports
+    "strict": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",
