@@ -1,15 +1,14 @@
-import { Text, View } from "react-native";
+import React from 'react';
 
-export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
+const IndexPage: React.FC = () => {
+    return (
+        <div>
+            <h1>Welcome to the Air Quality App</h1>
+            <p>
+                Navigate to the <a href="/app/explore">Explore</a> page to visualize air quality data from various cities.
+            </p>
+        </div>
+    );
+};
+
+export default IndexPage;
