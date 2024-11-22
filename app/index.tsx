@@ -5,7 +5,7 @@ const IndexPage: React.FC = () => {
         <div>
             <h1>Welcome to the Air Quality App</h1>
             <p>
-                Navigate to the <a href="/app/explore">Explore</a> page to visualize air quality data from various cities.
+                Navigate to the <a href="/explore">Explore</a> page to visualize air quality data from various cities.
             </p>
         </div>
     );

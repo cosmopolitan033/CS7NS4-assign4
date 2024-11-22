@@ -3,14 +3,14 @@ import { useFetchAirQuality } from '@/hooks/useFetchAirQuality';
 import LineChart from '../components/LineChart';
 
 const ExplorePage: React.FC = () => {
-    const [city, setCity] = useState<string>('city_name'); // Replace with a default city name.
+    const [city, setCity] = useState<string>('dublin'); // Replace with default city
     const { data, loading, error } = useFetchAirQuality(city);
+
+    console.log('ExplorePage rendered'); // Debugging log
+    console.log('Data:', data);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>{error}</p>;
-
-    const labels = data.map((item) => item.timestamp);
-    const values = data.map((item) => item.aqi);
 
     return (
         <div>
@@ -24,7 +24,14 @@ const ExplorePage: React.FC = () => {
                     placeholder="Enter city name"
                 />
             </label>
-            <LineChart labels={labels} data={values} />
+            {data && data.length > 0 ? (
+                <LineChart
+                    labels={data.map((item) => item.timestamp)}
+                    data={data.map((item) => item.aqi)}
+                />
+            ) : (
+                <p>No data available for the selected city.</p>
+            )}
         </div>
     );
 };
