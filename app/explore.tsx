@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useFetchAirQuality } from '@/hooks/useFetchAirQuality';
 import LineChart from '../components/LineChart';
 
+type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant';
+
 const ExplorePage: React.FC = () => {
     const [city, setCity] = useState<string>('dublin'); // Active city for data fetching
     const [pendingCity, setPendingCity] = useState<string>('dublin'); // Input field state
     const [startDate, setStartDate] = useState<string>(''); // Start date for query
     const [endDate, setEndDate] = useState<string>(''); // End date for query
+    const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi'); // Selected graph type
     const { data, loading, error } = useFetchAirQuality(city);
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,6 +22,10 @@ const ExplorePage: React.FC = () => {
 
     const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEndDate(e.target.value); // Update end date
+    };
+
+    const handleGraphChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setSelectedGraph(e.target.value as GraphType); // Update selected graph type
     };
 
     const handleConfirmCity = () => {
@@ -36,6 +43,21 @@ const ExplorePage: React.FC = () => {
 
     if (loading) return <p style={styles.loading}>Loading...</p>;
     if (error) return <p style={styles.error}>{error}</p>;
+
+    // Pollutant mapping for dominant pollutant
+    const pollutants: Record<string, number> = { pm25: 25, pm10: 10, o3: 30, co: 40, so2: 50, no2: 20 };
+
+    const getPollutantValue = (pollutant: string): number => {
+        return pollutants[pollutant] || 0; // Fallback to 0 if pollutant is not in the mapping
+    };
+
+    // Generate data for the selected graph
+    const graphData: Record<GraphType, number[]> = {
+        aqi: filteredData?.map((item) => item.aqi) || [],
+        temperature: filteredData?.map((item) => item.temperature) || [],
+        humidity: filteredData?.map((item) => item.humidity) || [],
+        dominantPollutant: filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [],
+    };
 
     return (
         <div style={styles.container}>
@@ -77,11 +99,22 @@ const ExplorePage: React.FC = () => {
                     />
                 </label>
             </div>
+            <div style={styles.selectContainer}>
+                <label style={styles.label}>
+                    Select Graph:
+                    <select value={selectedGraph} onChange={handleGraphChange} style={styles.select}>
+                        <option value="aqi">Air Quality Index (AQI)</option>
+                        <option value="temperature">Temperature (°C)</option>
+                        <option value="humidity">Humidity (%)</option>
+                        <option value="dominantPollutant">Dominant Pollutant (Categorized)</option>
+                    </select>
+                </label>
+            </div>
             <div style={styles.chartContainer}>
                 {filteredData && filteredData.length > 0 ? (
                     <LineChart
                         labels={filteredData.map((item) => item.timestamp)}
-                        data={filteredData.map((item) => item.aqi)}
+                        data={graphData[selectedGraph]}
                         options={{
                             maintainAspectRatio: false,
                         }}
@@ -126,6 +159,12 @@ const styles = {
         gap: '10px',
         padding: '10px 0',
     },
+    selectContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '10px 0',
+    },
     label: {
         fontSize: '16px',
     },
@@ -135,6 +174,13 @@ const styles = {
         borderRadius: '4px',
         border: '1px solid #ccc',
         width: '200px',
+    },
+    select: {
+        padding: '8px',
+        fontSize: '14px',
+        borderRadius: '4px',
+        border: '1px solid #ccc',
+        width: '250px',
     },
     button: {
         padding: '8px 16px',
