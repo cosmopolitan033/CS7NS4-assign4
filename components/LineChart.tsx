@@ -22,9 +22,11 @@ if (typeof window !== 'undefined') {
 interface LineChartProps {
     labels: string[];
     data: number[];
+    options?: any; // Add `options` property for chart options
+    style?: React.CSSProperties; // Add `style` property for container styling
 }
 
-const LineChart: React.FC<LineChartProps> = ({ labels, data }) => {
+const LineChart: React.FC<LineChartProps> = ({ labels, data, options, style }) => {
     const chartData = {
         labels: labels,
         datasets: [
@@ -39,8 +41,9 @@ const LineChart: React.FC<LineChartProps> = ({ labels, data }) => {
         ],
     };
 
-    const options = {
+    const defaultOptions = {
         responsive: true,
+        maintainAspectRatio: false, // Adjust for dynamic resizing
         plugins: {
             legend: {
                 position: 'top' as const,
@@ -86,9 +89,11 @@ const LineChart: React.FC<LineChartProps> = ({ labels, data }) => {
     }
 
     return (
-        <Suspense fallback={<p>Loading Chart...</p>}>
-            <Line data={chartData} options={options} />
-        </Suspense>
+        <div style={style}>
+            <Suspense fallback={<p>Loading Chart...</p>}>
+                <Line data={chartData} options={{ ...defaultOptions, ...options }} />
+            </Suspense>
+        </div>
     );
 };
 
