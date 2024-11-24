@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://172.166.180.49:8080/api/airquality';
+const API_URL = 'http://localhost:8080/api/airquality';
 
 interface AirQualityData {
     city: string;
