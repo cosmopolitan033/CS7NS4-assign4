@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const IndexPage: React.FC = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Redirect to the /explore route when this component mounts
+        navigate('/explore');
+    }, [navigate]);
+
     return (
         <div>
-            <h1>Welcome to the Air Quality App</h1>
-            <p>
-                Navigate to the <a href="/explore">Explore</a> page to visualize air quality data from various cities.
-            </p>
+            <p>Redirecting to Explore...</p>
         </div>
     );
 };
