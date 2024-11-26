@@ -5,34 +5,33 @@ import LineChart from '../components/LineChart';
 type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant';
 
 const ExplorePage: React.FC = () => {
-    const [city, setCity] = useState<string>('dublin'); // Active city for data fetching
-    const [pendingCity, setPendingCity] = useState<string>('dublin'); // Input field state
-    const [startDate, setStartDate] = useState<string>(''); // Start date for query
-    const [endDate, setEndDate] = useState<string>(''); // End date for query
-    const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi'); // Selected graph type
+    const [city, setCity] = useState<string>('dublin');
+    const [pendingCity, setPendingCity] = useState<string>('dublin');
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
     const { data, loading, error } = useFetchAirQuality(city);
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPendingCity(e.target.value); // Update the input field state
+        setPendingCity(e.target.value);
     };
 
     const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setStartDate(e.target.value); // Update start date
+        setStartDate(e.target.value);
     };
 
     const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEndDate(e.target.value); // Update end date
+        setEndDate(e.target.value);
     };
 
     const handleGraphChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setSelectedGraph(e.target.value as GraphType); // Update selected graph type
+        setSelectedGraph(e.target.value as GraphType);
     };
 
     const handleConfirmCity = () => {
-        setCity(pendingCity); // Update the city to fetch data
+        setCity(pendingCity);
     };
 
-    // Filter data based on the start and end dates
     const filteredData = data?.filter((item) => {
         const timestamp = new Date(item.timestamp).getTime();
         const start = startDate ? new Date(startDate).getTime() : null;
@@ -44,19 +43,84 @@ const ExplorePage: React.FC = () => {
     if (loading) return <p style={styles.loading}>Loading...</p>;
     if (error) return <p style={styles.error}>{error}</p>;
 
-    // Pollutant mapping for dominant pollutant
     const pollutants: Record<string, number> = { pm25: 25, pm10: 10, o3: 30, co: 40, so2: 50, no2: 20 };
 
     const getPollutantValue = (pollutant: string): number => {
-        return pollutants[pollutant] || 0; // Fallback to 0 if pollutant is not in the mapping
+        return pollutants[pollutant] || 0;
     };
 
-    // Generate data for the selected graph
     const graphData: Record<GraphType, number[]> = {
         aqi: filteredData?.map((item) => item.aqi) || [],
         temperature: filteredData?.map((item) => item.temperature) || [],
         humidity: filteredData?.map((item) => item.humidity) || [],
         dominantPollutant: filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [],
+    };
+
+    const chartOptions: Record<GraphType, any> = {
+        aqi: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Air Quality Index (AQI) Over Time', // Dynamic chart title
+                },
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'AQI', // Dynamic Y-axis title
+                    },
+                },
+            },
+        },
+        temperature: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Temperature (°C) Over Time', // Dynamic chart title
+                },
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Temperature (°C)', // Dynamic Y-axis title
+                    },
+                },
+            },
+        },
+        humidity: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Humidity (%) Over Time', // Dynamic chart title
+                },
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Humidity (%)', // Dynamic Y-axis title
+                    },
+                },
+            },
+        },
+        dominantPollutant: {
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Dominant Pollutant Over Time', // Dynamic chart title
+                },
+            },
+            scales: {
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Pollutant (Categorized Value)', // Dynamic Y-axis title
+                    },
+                },
+            },
+        },
     };
 
     return (
@@ -117,6 +181,7 @@ const ExplorePage: React.FC = () => {
                         data={graphData[selectedGraph]}
                         options={{
                             maintainAspectRatio: false,
+                            ...chartOptions[selectedGraph], // Apply specific options for the selected graph
                         }}
                         style={styles.chart}
                     />
