@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useFetchData } from '@/hooks/useFetchData';
 import LineChart from '../components/LineChart';
 import styles from "@/components/ui/ExplorePageStyles";
-type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant';
+
+type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant' | 'all';
 
 const ExplorePage: React.FC = () => {
     const [city, setCity] = useState<string>('dublin');
@@ -10,13 +11,9 @@ const ExplorePage: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
-    const endpointMap: Record<GraphType, string> = {
-        aqi: 'airquality',
-        temperature: 'temperature',
-        humidity: 'humidity',
-        dominantPollutant: 'dominantpollutant',
-    };
-    const { data, loading, error } = useFetchData(city, endpointMap[selectedGraph]);
+
+    // Assuming 'airquality' endpoint returns all data needed
+    const { data, loading, error } = useFetchData(city, 'airquality');
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPendingCity(e.target.value);
@@ -55,75 +52,139 @@ const ExplorePage: React.FC = () => {
         return pollutants[pollutant] || 0;
     };
 
-    const graphData: Record<GraphType, number[]> = {
-        aqi: filteredData?.map((item) => item.aqi) || [],
-        temperature: filteredData?.map((item) => item.temperature) || [],
-        humidity: filteredData?.map((item) => item.humidity) || [],
-        dominantPollutant: filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [],
-    };
+    // Prepare datasets for the chart
+    const chartLabels = filteredData?.map((item) => item.timestamp) || [];
 
-    const chartOptions: Record<GraphType, any> = {
-        aqi: {
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Air Quality Index (AQI) Over Time',
-                },
+    const datasets = [];
+
+    if (selectedGraph === 'all' || selectedGraph === 'aqi') {
+        datasets.push({
+            label: 'Air Quality Index (AQI)',
+            data: filteredData?.map((item) => item.aqi) || [],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderWidth: 1,
+            tension: 0.4,
+            yAxisID: 'y',
+        });
+    }
+
+    if (selectedGraph === 'all' || selectedGraph === 'temperature') {
+        datasets.push({
+            label: 'Temperature (°C)',
+            data: filteredData?.map((item) => item.temperature) || [],
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 1,
+            tension: 0.4,
+            yAxisID: 'y1',
+        });
+    }
+
+    if (selectedGraph === 'all' || selectedGraph === 'humidity') {
+        datasets.push({
+            label: 'Humidity (%)',
+            data: filteredData?.map((item) => item.humidity) || [],
+            borderColor: 'rgba(54, 162, 235, 1)',
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderWidth: 1,
+            tension: 0.4,
+            yAxisID: 'y2',
+        });
+    }
+
+    if (selectedGraph === 'all' || selectedGraph === 'dominantPollutant') {
+        datasets.push({
+            label: 'Dominant Pollutant (Categorized)',
+            data: filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [],
+            borderColor: 'rgba(255, 206, 86, 1)',
+            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+            borderWidth: 1,
+            tension: 0.4,
+            yAxisID: 'y3',
+        });
+    }
+
+    // Configure chart options to handle multiple y-axes if necessary
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top' as const,
             },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'AQI',
+            title: {
+                display: true,
+                text: 'Air Quality Data Over Time',
+            },
+            zoom: {
+                pan: {
+                    enabled: true,
+                    mode: 'x' as const,
+                },
+                zoom: {
+                    wheel: {
+                        enabled: true,
                     },
+                    pinch: {
+                        enabled: true,
+                    },
+                    mode: 'x' as const,
                 },
             },
         },
-        temperature: {
-            plugins: {
+        scales: {
+            x: {
                 title: {
                     display: true,
-                    text: 'Temperature (°C) Over Time',
+                    text: 'Timestamp',
                 },
             },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Temperature (°C)',
-                    },
-                },
-            },
-        },
-        humidity: {
-            plugins: {
+            y: {
+                type: 'linear' as const,
+                display: true,
+                position: 'left' as const,
                 title: {
                     display: true,
-                    text: 'Humidity (%) Over Time',
+                    text: 'AQI / Pollutant Value',
                 },
             },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Humidity (%)',
-                    },
+            y1: {
+                type: 'linear' as const,
+                display: selectedGraph === 'all' || selectedGraph === 'temperature',
+                position: 'right' as const,
+                grid: {
+                    drawOnChartArea: false,
                 },
-            },
-        },
-        dominantPollutant: {
-            plugins: {
                 title: {
                     display: true,
-                    text: 'Dominant Pollutant Over Time',
+                    text: 'Temperature (°C)',
                 },
             },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Pollutant (Categorized Value)',
-                    },
+            y2: {
+                type: 'linear' as const,
+                display: selectedGraph === 'all' || selectedGraph === 'humidity',
+                position: 'left' as const,
+                offset: true,
+                grid: {
+                    drawOnChartArea: false,
+                },
+                title: {
+                    display: true,
+                    text: 'Humidity (%)',
+                },
+            },
+            y3: {
+                type: 'linear' as const,
+                display: selectedGraph === 'all' || selectedGraph === 'dominantPollutant',
+                position: 'right' as const,
+                offset: true,
+                grid: {
+                    drawOnChartArea: false,
+                },
+                title: {
+                    display: true,
+                    text: 'Pollutant (Value)',
                 },
             },
         },
@@ -177,20 +238,17 @@ const ExplorePage: React.FC = () => {
                         <option value="temperature">Temperature (°C)</option>
                         <option value="humidity">Humidity (%)</option>
                         <option value="dominantPollutant">Dominant Pollutant (Categorized)</option>
+                        <option value="all">All Variables</option>
                     </select>
                 </label>
             </div>
             <div style={styles.chartContainer}>
                 {filteredData && filteredData.length > 0 ? (
                     <LineChart
-                        labels={filteredData.map((item) => item.timestamp)}
-                        data={graphData[selectedGraph]}
-                        options={{
-                            maintainAspectRatio: false,
-                            ...chartOptions[selectedGraph], // Apply specific options for the selected graph
-                        }}
+                        labels={chartLabels}
+                        datasets={datasets}
+                        options={chartOptions}
                         style={styles.chart}
-                        graphType={selectedGraph}
                     />
                 ) : (
                     <p>No data available for the selected city and date range.</p>
