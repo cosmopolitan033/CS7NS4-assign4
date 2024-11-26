@@ -184,6 +184,7 @@ const ExplorePage: React.FC = () => {
                             ...chartOptions[selectedGraph], // Apply specific options for the selected graph
                         }}
                         style={styles.chart}
+                        graphType={selectedGraph}
                     />
                 ) : (
                     <p>No data available for the selected city and date range.</p>

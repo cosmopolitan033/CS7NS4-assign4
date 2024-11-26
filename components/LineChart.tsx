@@ -24,14 +24,22 @@ interface LineChartProps {
     data: number[];
     options?: any; // Add `options` property for chart options
     style?: React.CSSProperties; // Add `style` property for container styling
+    graphType: string;
 }
 
-const LineChart: React.FC<LineChartProps> = ({ labels, data, options, style }) => {
+const labelMap: Record<string, string> = {
+    aqi: 'Air Quality Index (AQI)',
+    temperature: 'Temperature (°C)',
+    humidity: 'Humidity (%)',
+    dominantPollutant: 'Dominant Pollutant (Categorized)',
+};
+
+const LineChart: React.FC<LineChartProps> = ({ labels, data, options, style, graphType }) => {
     const chartData = {
         labels: labels,
         datasets: [
             {
-                label: 'Air Quality Index (AQI)',
+                label: labelMap[graphType] || 'Dataset',
                 data: data,
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
