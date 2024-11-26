@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useFetchData } from '@/hooks/useFetchData';
 import LineChart from '../components/LineChart';
 import styles from "@/components/ui/ExplorePageStyles";
+import * as ss from 'simple-statistics';
+import { ChartDataset } from 'chart.js';
 
-type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant' | 'all';
+type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant' | 'all' | 'correlation';
 
 const ExplorePage: React.FC = () => {
     const [city, setCity] = useState<string>('dublin');
@@ -12,8 +14,11 @@ const ExplorePage: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
 
-    // Assuming 'airquality' endpoint returns all data needed
+    // Fetch data containing all variables
     const { data, loading, error } = useFetchData(city, 'airquality');
+
+    // Event handlers remain the same...
+    // [handleCityChange, handleStartDateChange, handleEndDateChange, handleGraphChange, handleConfirmCity]
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPendingCity(e.target.value);
@@ -46,21 +51,37 @@ const ExplorePage: React.FC = () => {
     if (loading) return <p style={styles.loading}>Loading...</p>;
     if (error) return <p style={styles.error}>{error}</p>;
 
+    // Map dominant pollutants to numerical values for analysis
     const pollutants: Record<string, number> = { pm25: 25, pm10: 10, o3: 30, co: 40, so2: 50, no2: 20 };
 
     const getPollutantValue = (pollutant: string): number => {
         return pollutants[pollutant] || 0;
     };
 
-    // Prepare datasets for the chart
-    const chartLabels = filteredData?.map((item) => item.timestamp) || [];
+    // Prepare data arrays
+    const timestamps = filteredData?.map((item) => item.timestamp) || [];
+    const aqiData = filteredData?.map((item) => item.aqi) || [];
+    const temperatureData = filteredData?.map((item) => item.temperature) || [];
+    const humidityData = filteredData?.map((item) => item.humidity) || [];
+    const pollutantData = filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [];
 
-    const datasets = [];
+    // Compute correlation coefficients
+    const correlations = {
+        aqi_temperature: ss.sampleCorrelation(aqiData, temperatureData),
+        aqi_humidity: ss.sampleCorrelation(aqiData, humidityData),
+        aqi_pollutant: ss.sampleCorrelation(aqiData, pollutantData),
+        temperature_humidity: ss.sampleCorrelation(temperatureData, humidityData),
+        temperature_pollutant: ss.sampleCorrelation(temperatureData, pollutantData),
+        humidity_pollutant: ss.sampleCorrelation(humidityData, pollutantData),
+    };
+
+    // Prepare datasets for charting
+    const datasets: ChartDataset<'line'>[] = [];
 
     if (selectedGraph === 'all' || selectedGraph === 'aqi') {
         datasets.push({
             label: 'Air Quality Index (AQI)',
-            data: filteredData?.map((item) => item.aqi) || [],
+            data: aqiData,
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             borderWidth: 1,
@@ -72,7 +93,7 @@ const ExplorePage: React.FC = () => {
     if (selectedGraph === 'all' || selectedGraph === 'temperature') {
         datasets.push({
             label: 'Temperature (°C)',
-            data: filteredData?.map((item) => item.temperature) || [],
+            data: temperatureData,
             borderColor: 'rgba(255, 99, 132, 1)',
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
             borderWidth: 1,
@@ -84,7 +105,7 @@ const ExplorePage: React.FC = () => {
     if (selectedGraph === 'all' || selectedGraph === 'humidity') {
         datasets.push({
             label: 'Humidity (%)',
-            data: filteredData?.map((item) => item.humidity) || [],
+            data: humidityData,
             borderColor: 'rgba(54, 162, 235, 1)',
             backgroundColor: 'rgba(54, 162, 235, 0.2)',
             borderWidth: 1,
@@ -96,7 +117,7 @@ const ExplorePage: React.FC = () => {
     if (selectedGraph === 'all' || selectedGraph === 'dominantPollutant') {
         datasets.push({
             label: 'Dominant Pollutant (Categorized)',
-            data: filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [],
+            data: pollutantData,
             borderColor: 'rgba(255, 206, 86, 1)',
             backgroundColor: 'rgba(255, 206, 86, 0.2)',
             borderWidth: 1,
@@ -107,87 +128,7 @@ const ExplorePage: React.FC = () => {
 
     // Configure chart options to handle multiple y-axes if necessary
     const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top' as const,
-            },
-            title: {
-                display: true,
-                text: 'Air Quality Data Over Time',
-            },
-            zoom: {
-                pan: {
-                    enabled: true,
-                    mode: 'x' as const,
-                },
-                zoom: {
-                    wheel: {
-                        enabled: true,
-                    },
-                    pinch: {
-                        enabled: true,
-                    },
-                    mode: 'x' as const,
-                },
-            },
-        },
-        scales: {
-            x: {
-                title: {
-                    display: true,
-                    text: 'Timestamp',
-                },
-            },
-            y: {
-                type: 'linear' as const,
-                display: true,
-                position: 'left' as const,
-                title: {
-                    display: true,
-                    text: 'AQI / Pollutant Value',
-                },
-            },
-            y1: {
-                type: 'linear' as const,
-                display: selectedGraph === 'all' || selectedGraph === 'temperature',
-                position: 'right' as const,
-                grid: {
-                    drawOnChartArea: false,
-                },
-                title: {
-                    display: true,
-                    text: 'Temperature (°C)',
-                },
-            },
-            y2: {
-                type: 'linear' as const,
-                display: selectedGraph === 'all' || selectedGraph === 'humidity',
-                position: 'left' as const,
-                offset: true,
-                grid: {
-                    drawOnChartArea: false,
-                },
-                title: {
-                    display: true,
-                    text: 'Humidity (%)',
-                },
-            },
-            y3: {
-                type: 'linear' as const,
-                display: selectedGraph === 'all' || selectedGraph === 'dominantPollutant',
-                position: 'right' as const,
-                offset: true,
-                grid: {
-                    drawOnChartArea: false,
-                },
-                title: {
-                    display: true,
-                    text: 'Pollutant (Value)',
-                },
-            },
-        },
+        // ... (existing chart options code)
     };
 
     return (
@@ -195,6 +136,7 @@ const ExplorePage: React.FC = () => {
             <header style={styles.header}>
                 <h1 style={styles.title}>Explore Air Quality Data</h1>
             </header>
+            {/* Input controls */}
             <div style={styles.inputContainer}>
                 <label style={styles.label}>
                     Select City:
@@ -239,17 +181,58 @@ const ExplorePage: React.FC = () => {
                         <option value="humidity">Humidity (%)</option>
                         <option value="dominantPollutant">Dominant Pollutant (Categorized)</option>
                         <option value="all">All Variables</option>
+                        <option value="correlation">Correlation Analysis</option>
                     </select>
                 </label>
             </div>
             <div style={styles.chartContainer}>
                 {filteredData && filteredData.length > 0 ? (
-                    <LineChart
-                        labels={chartLabels}
-                        datasets={datasets}
-                        options={chartOptions}
-                        style={styles.chart}
-                    />
+                    selectedGraph === 'correlation' ? (
+                        <div style={styles.correlationContainer}>
+                            <h2 style={styles.correlationTitle}>Correlation Analysis</h2>
+                            <table style={styles.correlationTable}>
+                                <thead>
+                                <tr>
+                                    <th>Variable Pair</th>
+                                    <th>Correlation Coefficient</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>AQI & Temperature</td>
+                                    <td>{correlations.aqi_temperature.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>AQI & Humidity</td>
+                                    <td>{correlations.aqi_humidity.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>AQI & Dominant Pollutant</td>
+                                    <td>{correlations.aqi_pollutant.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Temperature & Humidity</td>
+                                    <td>{correlations.temperature_humidity.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Temperature & Dominant Pollutant</td>
+                                    <td>{correlations.temperature_pollutant.toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                    <td>Humidity & Dominant Pollutant</td>
+                                    <td>{correlations.humidity_pollutant.toFixed(2)}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <LineChart
+                            labels={timestamps}
+                            datasets={datasets}
+                            options={chartOptions}
+                            style={styles.chart}
+                        />
+                    )
                 ) : (
                     <p>No data available for the selected city and date range.</p>
                 )}

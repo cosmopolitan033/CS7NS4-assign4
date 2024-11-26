@@ -85,6 +85,27 @@ const styles = {
         fontSize: '18px',
         color: 'red',
     },
+    correlationContainer: {
+        padding: '20px',
+        backgroundColor: '#f9f9f9',
+    } as React.CSSProperties,
+    correlationTitle: {
+        fontSize: '24px',
+        marginBottom: '10px',
+    } as React.CSSProperties,
+    correlationTable: {
+        width: '100%',
+        borderCollapse: 'collapse' as 'collapse',
+    } as React.CSSProperties,
+    tableHeader: {
+        border: '1px solid #ddd',
+        padding: '8px',
+        backgroundColor: '#f2f2f2',
+    } as React.CSSProperties,
+    tableCell: {
+        border: '1px solid #ddd',
+        padding: '8px',
+    } as React.CSSProperties,
 };
 
 export default styles;
