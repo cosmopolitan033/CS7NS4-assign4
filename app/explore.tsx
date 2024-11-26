@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useFetchAirQuality } from '@/hooks/useFetchAirQuality';
+import { useFetchData } from '@/hooks/useFetchData';
 import LineChart from '../components/LineChart';
 import styles from "@/components/ui/ExplorePageStyles";
 type GraphType = 'aqi' | 'temperature' | 'humidity' | 'dominantPollutant';
@@ -10,7 +10,13 @@ const ExplorePage: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
-    const { data, loading, error } = useFetchAirQuality(city);
+    const endpointMap: Record<GraphType, string> = {
+        aqi: 'airquality',
+        temperature: 'temperature',
+        humidity: 'humidity',
+        dominantPollutant: 'dominantpollutant',
+    };
+    const { data, loading, error } = useFetchData(city, endpointMap[selectedGraph]);
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPendingCity(e.target.value);
@@ -61,14 +67,14 @@ const ExplorePage: React.FC = () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Air Quality Index (AQI) Over Time', // Dynamic chart title
+                    text: 'Air Quality Index (AQI) Over Time',
                 },
             },
             scales: {
                 y: {
                     title: {
                         display: true,
-                        text: 'AQI', // Dynamic Y-axis title
+                        text: 'AQI',
                     },
                 },
             },
@@ -77,14 +83,14 @@ const ExplorePage: React.FC = () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Temperature (°C) Over Time', // Dynamic chart title
+                    text: 'Temperature (°C) Over Time',
                 },
             },
             scales: {
                 y: {
                     title: {
                         display: true,
-                        text: 'Temperature (°C)', // Dynamic Y-axis title
+                        text: 'Temperature (°C)',
                     },
                 },
             },
@@ -93,14 +99,14 @@ const ExplorePage: React.FC = () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Humidity (%) Over Time', // Dynamic chart title
+                    text: 'Humidity (%) Over Time',
                 },
             },
             scales: {
                 y: {
                     title: {
                         display: true,
-                        text: 'Humidity (%)', // Dynamic Y-axis title
+                        text: 'Humidity (%)',
                     },
                 },
             },
@@ -109,14 +115,14 @@ const ExplorePage: React.FC = () => {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Dominant Pollutant Over Time', // Dynamic chart title
+                    text: 'Dominant Pollutant Over Time',
                 },
             },
             scales: {
                 y: {
                     title: {
                         display: true,
-                        text: 'Pollutant (Categorized Value)', // Dynamic Y-axis title
+                        text: 'Pollutant (Categorized Value)',
                     },
                 },
             },
