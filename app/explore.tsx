@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFetchData } from '@/hooks/useFetchData';
 import LineChart from '../components/LineChart';
 import styles from "@/components/ui/ExplorePageStyles";
@@ -13,6 +13,7 @@ const ExplorePage: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
+    const [backgroundColor, setBackgroundColor] = useState<string>('#f9f9f9'); // Background color state
 
     // Fetch data containing all variables
     const { data, loading, error } = useFetchData(city, 'airquality');
@@ -47,6 +48,29 @@ const ExplorePage: React.FC = () => {
 
         return (!start || timestamp >= start) && (!end || timestamp <= end);
     });
+
+    // Calculate average AQI and adjust background color
+    const calculateAverageAQI = (): number | null => {
+        if (!filteredData || filteredData.length === 0) return null;
+        const totalAQI = filteredData.reduce((sum, item) => sum + item.aqi, 0);
+        return totalAQI / filteredData.length;
+    };
+
+    useEffect(() => {
+        const averageAQI = calculateAverageAQI();
+        console.log("fuck", averageAQI);
+        if (averageAQI !== null) {
+            if (averageAQI < 50) {
+                setBackgroundColor('#d4edda'); // Green for good air quality
+            } else if (averageAQI < 100) {
+                setBackgroundColor('#fff3cd'); // Yellow for moderate air quality
+            } else {
+                setBackgroundColor('#f8d7da'); // Red for poor air quality
+            }
+        } else {
+            setBackgroundColor('#f9f9f9'); // Default background color
+        }
+    }, [filteredData]);
 
     if (loading) return <p style={styles.loading}>Loading...</p>;
     if (error) return <p style={styles.error}>{error}</p>;
@@ -132,7 +156,7 @@ const ExplorePage: React.FC = () => {
     };
 
     return (
-        <div style={styles.container}>
+        <div style={{...styles.container, backgroundColor}}>
             <header style={styles.header}>
                 <h1 style={styles.title}>Explore Air Quality Data</h1>
             </header>
