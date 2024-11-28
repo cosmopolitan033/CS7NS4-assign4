@@ -13,13 +13,9 @@ const ExplorePage: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [selectedGraph, setSelectedGraph] = useState<GraphType>('aqi');
-    const [backgroundColor, setBackgroundColor] = useState<string>('#f9f9f9'); // Background color state
+    const [backgroundColor, setBackgroundColor] = useState<string>('#f9f9f9');
 
-    // Fetch data containing all variables
     const { data, loading, error } = useFetchData(city, 'airquality');
-
-    // Event handlers remain the same...
-    // [handleCityChange, handleStartDateChange, handleEndDateChange, handleGraphChange, handleConfirmCity]
 
     const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPendingCity(e.target.value);
@@ -49,7 +45,6 @@ const ExplorePage: React.FC = () => {
         return (!start || timestamp >= start) && (!end || timestamp <= end);
     });
 
-    // Calculate average AQI and adjust background color
     const calculateAverageAQI = (): number | null => {
         if (!filteredData || filteredData.length === 0) return null;
         const totalAQI = filteredData.reduce((sum, item) => sum + item.aqi, 0);
@@ -60,35 +55,32 @@ const ExplorePage: React.FC = () => {
         const averageAQI = calculateAverageAQI();
         if (averageAQI !== null) {
             if (averageAQI < 50) {
-                setBackgroundColor('#d4edda'); // Green for good air quality
+                setBackgroundColor('#d4edda');
             } else if (averageAQI < 100) {
-                setBackgroundColor('#fff3cd'); // Yellow for moderate air quality
+                setBackgroundColor('#fff3cd');
             } else {
-                setBackgroundColor('#f8d7da'); // Red for poor air quality
+                setBackgroundColor('#f8d7da');
             }
         } else {
-            setBackgroundColor('#f9f9f9'); // Default background color
+            setBackgroundColor('#f9f9f9');
         }
     }, [filteredData]);
 
     if (loading) return <p style={styles.loading}>Loading...</p>;
     if (error) return <p style={styles.error}>{error}</p>;
 
-    // Map dominant pollutants to numerical values for analysis
     const pollutants: Record<string, number> = { pm25: 25, pm10: 10, o3: 30, co: 40, so2: 50, no2: 20 };
 
     const getPollutantValue = (pollutant: string): number => {
         return pollutants[pollutant] || 0;
     };
 
-    // Prepare data arrays
     const timestamps = filteredData?.map((item) => item.timestamp) || [];
     const aqiData = filteredData?.map((item) => item.aqi) || [];
     const temperatureData = filteredData?.map((item) => item.temperature) || [];
     const humidityData = filteredData?.map((item) => item.humidity) || [];
     const pollutantData = filteredData?.map((item) => getPollutantValue(item.dominantPollutant)) || [];
 
-    // Compute correlation coefficients
     const correlations = {
         aqi_temperature: ss.sampleCorrelation(aqiData, temperatureData),
         aqi_humidity: ss.sampleCorrelation(aqiData, humidityData),
@@ -98,7 +90,6 @@ const ExplorePage: React.FC = () => {
         humidity_pollutant: ss.sampleCorrelation(humidityData, pollutantData),
     };
 
-    // Prepare datasets for charting
     const datasets: ChartDataset<'line'>[] = [];
 
     if (selectedGraph === 'all' || selectedGraph === 'aqi') {
@@ -149,9 +140,7 @@ const ExplorePage: React.FC = () => {
         });
     }
 
-    // Configure chart options to handle multiple y-axes if necessary
     const chartOptions = {
-        // ... (existing chart options code)
     };
 
     return (

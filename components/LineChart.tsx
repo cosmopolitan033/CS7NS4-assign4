@@ -20,7 +20,7 @@ if (typeof window !== 'undefined') {
 
 interface LineChartProps {
     labels: string[];
-    datasets: any[]; // Updated to accept multiple datasets
+    datasets: any[];
     options?: any;
     style?: React.CSSProperties;
 }
@@ -34,7 +34,7 @@ const LineChart: React.FC<LineChartProps> = ({ labels, datasets, options, style 
     const defaultOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        ...options, // Merge passed options
+        ...options,
     };
 
     if (typeof window === 'undefined') {
