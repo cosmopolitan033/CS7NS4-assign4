@@ -58,7 +58,6 @@ const ExplorePage: React.FC = () => {
 
     useEffect(() => {
         const averageAQI = calculateAverageAQI();
-        console.log("fuck", averageAQI);
         if (averageAQI !== null) {
             if (averageAQI < 50) {
                 setBackgroundColor('#d4edda'); // Green for good air quality
